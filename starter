@@ -1,0 +1,42 @@
+* Minimization and short dynamics of a solvated protein
+* CHARMM input script
+*
+
+! Read topology and parameter files
+open read card unit 10 name top_all36_prot.rtf
+read rtf card unit 10
+
+open read card unit 20 name par_all36m_prot.prm
+read param card unit 20 flex
+
+! Read protein structure
+open read card unit 30 name protein.psf
+read psf card unit 30
+
+open read card unit 40 name protein.crd
+read coor card unit 40
+
+! Set up nonbonded options
+nbonds atom cdiel eps 1.0 -
+    cutnb 14.0 ctofnb 12.0 ctonnb 10.0 -
+    switch vatom vswitch
+
+! Energy minimization
+mini sd nstep 200 nprint 50
+mini abnr nstep 500 nprint 50 tolgrd 0.01
+
+! Heating from 0 to 300 K
+dynamics leap start timestep 0.002 nstep 5000 -
+    nprint 100 iprfrq 1000 -
+    firstt 0.0 finalt 300.0 -
+    ihtfrq 100 teminc 5.0 -
+    iasors 1 iasvel 1 iscvel 0 -
+    ichecw 0 -
+    nsavc 1000 nsavv 0 -
+    iunread -1 iunwri 51 iuncrd 52 iunvel -1
+
+! Write final coordinates
+open write card unit 60 name protein_min.crd
+write coor card unit 60
+
+stop
