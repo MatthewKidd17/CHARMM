@@ -1,0 +1,50 @@
+* 03_equilibrate.inp
+* NVT heating followed by NPT equilibration
+*
+
+stream toppar/toppar.str
+
+open read card unit 30 name protein_solv.psf
+read psf card unit 30
+
+open read card unit 40 name protein_solv.crd
+read coor card unit 40
+
+set boxsize 70.0
+crystal define cubic @boxsize @boxsize @boxsize 90.0 90.0 90.0
+crystal build cutoff 14.0
+image byres xcen 0.0 ycen 0.0 zcen 0.0 sele all end
+
+! PME electrostatics
+nbonds atom ewald pmewald kappa 0.34 -
+    fftx 72 ffty 72 fftz 72 order 6 -
+    cutnb 14.0 ctofnb 12.0 ctonnb 10.0 -
+    vswitch
+
+shake bonh param tol 1.0e-8
+
+! --- NVT heating: 0 -> 300 K ---
+dynamics leap start timestep 0.002 nstep 25000 -
+    nprint 1000 iprfrq 2500 -
+    firstt 0.0 finalt 300.0 -
+    ihtfrq 250 teminc 3.0 ieqfrq 0 -
+    iasors 1 iasvel 1 iscvel 0 ichecw 0 -
+    nsavc 2500 nsavv 0 -
+    iunwri 51 iuncrd 52
+
+! --- NPT equilibration at 300 K, 1 atm ---
+dynamics cpt leap restart timestep 0.002 nstep 50000 -
+    nprint 1000 iprfrq 5000 -
+    firstt 300.0 finalt 300.0 -
+    pconstant pmass 500.0 pref 1.0 pgamma 25.0 -
+    hoover reft 300.0 tmass 1000.0 -
+    iasors 1 iasvel 1 iscvel 0 ichecw 0 -
+    nsavc 5000 nsavv 0 -
+    iunread 51 iunwri 53 iuncrd 54
+
+open write card unit 60 name protein_equil.crd
+write coor card unit 60
+* Equilibrated coordinates
+*
+
+stop

@@ -1,0 +1,44 @@
+* 02_solvate.inp
+* Solvate the minimized protein in a cubic TIP3P water box
+*
+
+stream toppar/toppar.str
+
+open read card unit 30 name protein.psf
+read psf card unit 30
+
+open read card unit 40 name protein_min.crd
+read coor card unit 40
+
+! Box dimensions (edit to fit your system, Angstroms)
+set boxsize 70.0
+
+! Read a pre-equilibrated water box and overlay
+open read card unit 11 name toppar/water_box.crd
+read sequence tip3 8000
+generate WT00 noangle nodihedral
+
+open read card unit 12 name toppar/water_box.crd
+read coor card unit 12 append
+
+! Delete waters overlapping the protein (within 2.6 A)
+delete atom sele .byres. (segid WT00 .and. type OH2 .and. -
+    (.not. segid WT00 .around. 2.6)) end
+
+! Center system and set up periodic boundaries
+coor stat
+crystal define cubic @boxsize @boxsize @boxsize 90.0 90.0 90.0
+crystal build cutoff 14.0
+image byres xcen 0.0 ycen 0.0 zcen 0.0 sele segid WT00 end
+
+energy
+
+open write card unit 50 name protein_solv.psf
+write psf card unit 50
+
+open write card unit 51 name protein_solv.crd
+write coor card unit 51
+* Solvated coordinates
+*
+
+stop

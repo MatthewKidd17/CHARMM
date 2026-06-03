@@ -1,0 +1,35 @@
+* 01_minimize.inp
+* Energy minimization of a protein structure
+*
+
+! Load topology and parameters
+stream toppar/toppar.str
+
+! Read structure and coordinates
+open read card unit 30 name protein.psf
+read psf card unit 30
+
+open read card unit 40 name protein.crd
+read coor card unit 40
+
+! Nonbonded setup
+nbonds atom cdiel eps 1.0 -
+    cutnb 14.0 ctofnb 12.0 ctonnb 10.0 -
+    switch vatom vswitch
+
+! Fix backbone lightly during steepest descent, then release
+cons harm force 5.0 sele type CA .or. type C .or. type N end
+
+mini sd   nstep 250 nprint 50
+cons harm clear
+mini abnr nstep 750 nprint 50 tolgrd 0.01
+
+energy
+
+! Write minimized coordinates
+open write card unit 50 name protein_min.crd
+write coor card unit 50
+* Minimized coordinates
+*
+
+stop
